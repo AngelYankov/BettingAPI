@@ -34,6 +34,7 @@ namespace BettingAPI.DataContext
                 builder.Property(x => x.Value).HasColumnType("decimal(5,2)").IsRequired(true);
 
                 builder.Property(x => x.SpecialValueBet).HasColumnType("decimal(5,2)").IsRequired(false);
+
             }
         }
     }

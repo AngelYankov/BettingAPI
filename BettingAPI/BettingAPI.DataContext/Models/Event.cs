@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BettingAPI.DataContext.Models
 {
     public class Event
     {
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
-
-        public int EventID { get; set; }
 
         public string Name { get; set; }
 
@@ -15,6 +15,5 @@ namespace BettingAPI.DataContext.Models
         public int CategoryID { get; set; }
 
         public List<Match> Matches { get; set; }
-
     }
 }

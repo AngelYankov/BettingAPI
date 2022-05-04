@@ -1,7 +1,10 @@
-﻿namespace BettingAPI.DataContext.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace BettingAPI.DataContext.Models
 {
     public class Odd
     {
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
 
         public string Name { get; set; }
@@ -14,6 +17,6 @@
 
         public Bet Bet { get; set; }
 
-        public bool IsActive { get => Bet.IsActive; set { } }
+        public bool IsActive { get; set; }
     }
 }

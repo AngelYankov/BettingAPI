@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BettingAPI.DataContext.Models
 {
     public class Bet
     {
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
 
         public string Name { get; set; }
@@ -16,10 +18,6 @@ namespace BettingAPI.DataContext.Models
 
         public List<Odd> Odds { get; set; }
 
-        public bool IsActive
-        {
-            get => Match.IsActive;
-            set { }
-        }
+        public bool IsActive { get; set; }
     }
 }
