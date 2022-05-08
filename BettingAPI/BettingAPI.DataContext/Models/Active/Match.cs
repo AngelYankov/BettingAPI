@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BettingAPI.DataContext.Models
+namespace BettingAPI.DataContext.Models.Active
 {
     public class Match
     {
+        [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
 
@@ -17,8 +19,7 @@ namespace BettingAPI.DataContext.Models
 
         public List<Bet> Bets { get; set; }
 
-        public bool IsActive { get; set; }
-
+        [ForeignKey("Event")]
         public int EventId { get; set; }
 
         public Event Event { get; set; }

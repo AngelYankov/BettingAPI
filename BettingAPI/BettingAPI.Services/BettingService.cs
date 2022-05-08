@@ -13,11 +13,11 @@ using System.Xml;
 
 namespace BettingAPI.Services
 {
-    public class BettingOddsService : IBettingOddsService
+    public class BettingService : IBettingService
     {
         private readonly BettingContext context;
 
-        public BettingOddsService(BettingContext context)
+        public BettingService(BettingContext context)
         {
             this.context = context;
         }
@@ -109,20 +109,15 @@ namespace BettingAPI.Services
         //    this.context.SaveChanges();
         //}
 
-        public void Print(int number)
-        {
-            Console.WriteLine($"Log number: {number}");
-        }
-
-        public void Save()
+        public void SaveData()
         {
             var document = TransformXml();
 
             var allSports = SaveSports(document);
-            var allEvents = SaveEvents(document);
-            var allMatches = SaveMatches(document);
+            var allEvents = SaveEvents(document, allSports);
+            var allMatches = SaveMatches(document, allEvents);
             var allBets = SaveBets(document, allMatches);
-            var allOdds = SaveOdds(document);
+            var allOdds = SaveOdds(document, allBets);
 
             AddSports(allSports);
             AddEvents(allEvents);
@@ -410,87 +405,54 @@ namespace BettingAPI.Services
             var sports = document.SelectNodes("//Sport");
             for (int i = 0; i < sports.Count; i++)
             {
-                var sport = new SportHistory()
+                allSports.Add(new SportHistory()
                 {
                     Id = Int32.Parse(sports[i].SelectSingleNode("@ID").InnerText),
                     Name = sports[i].SelectSingleNode("@Name").InnerText,
-                };
-
-                try
-                {
-                    this.context.SportHistories.Add(sport);
-                    this.context.SaveChanges();
-                    allSports.Add(sport);
-                }
-                catch (Exception ex)
-                {
-                    continue;
-                }
+                });
             }
 
-            return allSports.Select(s => new SportHistoryDTO(s));
+            return allSports.Select(s=>new SportHistoryDTO(s));
         }
 
-        private IEnumerable<EventHistoryDTO> SaveEvents(XmlDocument document)
+        private IEnumerable<EventHistoryDTO> SaveEvents(XmlDocument document, IEnumerable<SportHistoryDTO> allSports)
         {
             var allEvents = new List<EventHistory>();
             var events = document.SelectNodes("//Event");
             for (int i = 0; i < events.Count; i++)
             {
-                var eventHistory = new EventHistory()
+                allEvents.Add(new EventHistory()
                 {
                     Id = Int32.Parse(events[i].SelectSingleNode("@ID").InnerText),
                     CategoryID = Int32.Parse(events[i].SelectSingleNode("@CategoryID").InnerText),
                     Name = events[i].SelectSingleNode("@Name").InnerText,
                     IsLive = events[i].SelectSingleNode("@IsLive").InnerText == "true",
                     SportHistoryId = Int32.Parse(events[i].SelectSingleNode("@SportId").InnerText),
-                    //SportHistoryId = GetSport(Int32.Parse(events[i].SelectSingleNode("@SportId").InnerText)).Id
-                };
-
-                try
-                {
-                    this.context.EventHistories.Add(eventHistory);
-                    this.context.SaveChanges();
-                    allEvents.Add(eventHistory);
-                }
-                catch (Exception ex)
-                {
-                    continue;
-                }
+                    //SportHistoryId = GetSport(Int32.Parse(events[i].SelectSingleNode("@SportId").InnerText), allSports)
+                });
             }
 
-            return allEvents.Select(e => new EventHistoryDTO(e));
+            return allEvents.Select(e=>new EventHistoryDTO(e));
         }
 
-        private IEnumerable<MatchHistoryDTO> SaveMatches(XmlDocument document)
+        private IEnumerable<MatchHistoryDTO> SaveMatches(XmlDocument document, IEnumerable<EventHistoryDTO> allEvents)
         {
             var allMatches = new List<MatchHistory>();
             var matches = document.SelectNodes("//Match");
             for (int i = 0; i < matches.Count; i++)
             {
-                var match = new MatchHistory()
+                allMatches.Add(new MatchHistory()
                 {
                     Id = Int32.Parse(matches[i].SelectSingleNode("@ID").InnerText),
                     Name = matches[i].SelectSingleNode("@Name").InnerText,
                     StartDate = DateTime.Parse(matches[i].SelectSingleNode("@StartDate").InnerText),
                     MatchType = Enum.Parse<MatchType>(matches[i].SelectSingleNode("@MatchType").InnerText),
                     EventHistoryId = Int32.Parse(matches[i].SelectSingleNode("@EventId").InnerText),
-                    //EventHistoryId = GetEvent(Int32.Parse(matches[i].SelectSingleNode("@EventId").InnerText)).Id
-                };
-
-                try
-                {
-                    this.context.MatchHistories.Add(match);
-                    this.context.SaveChanges();
-                    allMatches.Add(match);
-                }
-                catch (Exception ex)
-                {
-                    continue;
-                }
+                    //EventHistoryId = GetEvent(Int32.Parse(matches[i].SelectSingleNode("@EventId").InnerText), allEvents)
+                });
             }
 
-            return allMatches.Select(m => new MatchHistoryDTO(m));
+            return allMatches.Select(m=>new MatchHistoryDTO(m));
         }
 
         private IEnumerable<BetHistoryDTO> SaveBets(XmlDocument document, IEnumerable<MatchHistoryDTO> allMatches)
@@ -499,58 +461,35 @@ namespace BettingAPI.Services
             var bets = document.SelectNodes("//Bet");
             for (int i = 0; i < bets.Count; i++)
             {
-                var bet = new BetHistory()
+                allBets.Add(new BetHistory()
                 {
                     Id = Int32.Parse(bets[i].SelectSingleNode("@ID").InnerText),
                     Name = bets[i].SelectSingleNode("@Name").InnerText,
                     IsLive = bets[i].SelectSingleNode("@IsLive").InnerText == "true",
                     MatchHistoryId = Int32.Parse(bets[i].SelectSingleNode("@MatchId").InnerText),
-                    MatchType = (MatchType)GetMatch(Int32.Parse(bets[i].SelectSingleNode("@MatchId").InnerText), allMatches).MatchType,
-                    MatchStartDate = GetMatch(Int32.Parse(bets[i].SelectSingleNode("@MatchId").InnerText), allMatches).StartDate
-                    //MatchHistoryId = GetMatch(Int32.Parse(bets[i].SelectSingleNode("@MatchId").InnerText)).Id
-                };
+                    //MatchHistoryId = GetMatch(Int32.Parse(bets[i].SelectSingleNode("@MatchId").InnerText), allMatches)
+                });
 
-                try
-                {
-                    this.context.BetHistories.Add(bet);
-                    this.context.SaveChanges();
-                    allBets.Add(bet);
-                }
-                catch (Exception)
-                {
-                    continue;
-                }
             }
 
             return allBets.Select(b => new BetHistoryDTO(b));
         }
 
-        private IEnumerable<OddHistoryDTO> SaveOdds(XmlDocument document)
+        private IEnumerable<OddHistoryDTO> SaveOdds(XmlDocument document, IEnumerable<BetHistoryDTO> allBets)
         {
             var allOdds = new List<OddHistory>();
             var odds = document.SelectNodes("//Odd");
             for (int i = 0; i < odds.Count; i++)
             {
-                var odd = new OddHistory()
+                allOdds.Add(new OddHistory()
                 {
                     Id = Int32.Parse(odds[i].SelectSingleNode("@ID").InnerText),
                     Name = odds[i].SelectSingleNode("@Name").InnerText,
                     Value = Convert.ToDecimal(odds[i].SelectSingleNode("@Value").InnerText),
                     SpecialValueBet = odds[i].SelectSingleNode("@SpecialBetValue")?.InnerText,
                     BetHistoryId = Int32.Parse(odds[i].SelectSingleNode("@BetId").InnerText),
-                    //BetHistoryId = GetBet(Int32.Parse(odds[i].SelectSingleNode("@BetId").InnerText)).Id
-                };
-
-                try
-                {
-                    this.context.OddHistories.Add(odd);
-                    this.context.SaveChanges();
-                    allOdds.Add(odd);
-                }
-                catch (Exception)
-                {
-                    continue;
-                }
+                    //BetHistoryId = GetBet(Int32.Parse(odds[i].SelectSingleNode("@BetId").InnerText), allBets)
+                });
             }
 
             return allOdds.Select(o => new OddHistoryDTO(o));
@@ -640,30 +579,24 @@ namespace BettingAPI.Services
             return doc;
         }
 
-        private SportHistory GetSport(int id)
+        private int GetSport(int id, IEnumerable<SportHistoryDTO> allSports)
         {
-            return this.context.SportHistories.First(s => s.Id == id);
+            return allSports.First(s => s.Id == id).Id;
         }
 
-        private EventHistory GetEvent(int id)
+        private int GetEvent(int id, IEnumerable<EventHistoryDTO> allEvents)
         {
-            return this.context.EventHistories.First(e => e.Id == id);
+            return allEvents.First(e => e.Id == id).Id;
         }
 
-        //private MatchHistory GetMatch(int id)
-        //{
-        //    return this.context.MatchHistories.First(m => m.MatchIdentification == id);
-        //}
-
-        private MatchHistoryDTO GetMatch(int id, IEnumerable<MatchHistoryDTO> allMatches)
+        private int GetMatch(int id, IEnumerable<MatchHistoryDTO> allMatches)
         {
-            var match = this.context.MatchHistories.First(m => m.Id == id);
-            return new MatchHistoryDTO(match);
+            return allMatches.First(m => m.Id == id).Id;
         }
 
-        private BetHistory GetBet(int id)
+        private int GetBet(int id, IEnumerable<BetHistoryDTO> allBets)
         {
-            return this.context.BetHistories.First(b => b.Id == id);
+            return allBets.First(b => b.Id == id).Id;
         }
     }
 }
