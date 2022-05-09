@@ -17,8 +17,8 @@ namespace BettingAPI
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                });
-            //.ConfigureServices(services=>
-            //        services.AddHostedService<BackgroundDataUploader>());
+                })
+            .ConfigureServices(services =>
+                    services.AddHostedService<BackgroundDataUploader>());
     }
 }

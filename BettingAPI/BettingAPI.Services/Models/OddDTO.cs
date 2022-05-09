@@ -7,7 +7,7 @@ namespace BettingAPI.Services.Models
     {
         public OddDTO(OddHistory oddHistory)
         {
-            //this.Id = oddHistory.Id;
+            this.Id = oddHistory.Id;
             this.Name = oddHistory.Name;
             this.Value = oddHistory.Value;
             this.BetId = oddHistory.BetHistoryId;

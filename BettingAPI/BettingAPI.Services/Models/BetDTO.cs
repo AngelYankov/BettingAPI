@@ -9,7 +9,7 @@ namespace BettingAPI.Services.Models
     {
         public BetDTO(BetHistory betHistory)
         {
-            //this.Id = betHistory.Id;
+            this.Id = betHistory.Id;
             this.IsLive = betHistory.IsLive;
             this.MatchId = betHistory.MatchHistoryId;
             this.Name = betHistory.Name;

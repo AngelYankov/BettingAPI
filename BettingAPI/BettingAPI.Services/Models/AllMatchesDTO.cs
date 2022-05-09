@@ -1,4 +1,5 @@
-﻿using BettingAPI.DataContext.Models.Active;
+﻿using BettingAPI.DataContext.Enums;
+using BettingAPI.DataContext.Models.Active;
 using BettingAPI.DataContext.Models.History;
 using System;
 using System.Collections.Generic;
@@ -10,11 +11,10 @@ namespace BettingAPI.Services.Models
     {
         public AllMatchesDTO(MatchHistory matchHistory)
         {
-            //this.Id = matchHistory.Id;
+            this.Id = matchHistory.Id;
             this.Name = matchHistory.Name;
             this.StartDate = matchHistory.StartDate;
-            this.MatchType = (DataContext.Models.MatchType)matchHistory.MatchType;
-            //this.Bets = match.BetHistories.Select(b => new BetDTO(b)).ToList();
+            this.MatchType = matchHistory.MatchType;
             this.EventId = matchHistory.EventHistoryId;
         }
 
@@ -23,7 +23,7 @@ namespace BettingAPI.Services.Models
             this.Id = match.Id;
             this.Name = match.Name;
             this.StartDate = match.StartDate;
-            this.MatchType = (DataContext.Models.MatchType)match.MatchType;
+            this.MatchType = match.MatchType;
             this.Bets = match.Bets.Select(b => new BetDTO(b)).ToList();
             this.EventId = match.EventId;
             this.Event = match.Event;
@@ -35,7 +35,7 @@ namespace BettingAPI.Services.Models
 
         public DateTime StartDate { get; set; }
 
-        public DataContext.Models.MatchType MatchType { get; set; }
+        public MatchType MatchType { get; set; }
 
         public List<BetDTO> Bets { get; set; }
 

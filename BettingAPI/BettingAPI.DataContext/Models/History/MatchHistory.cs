@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using BettingAPI.DataContext.Enums;
 
 namespace BettingAPI.DataContext.Models.History
 {
@@ -23,12 +24,5 @@ namespace BettingAPI.DataContext.Models.History
         public int EventHistoryId { get; set; }
 
         public EventHistory EventHistory { get; set; }
-    }
-
-    public enum MatchType
-    {
-        PreMatch,
-        Live,
-        OutRight
     }
 }

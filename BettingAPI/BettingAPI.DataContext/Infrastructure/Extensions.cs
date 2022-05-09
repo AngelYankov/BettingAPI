@@ -9,47 +9,41 @@ namespace BettingAPI.DataContext.Infrastructure
     {
         public static DataTable ToDataTable<T>(this IEnumerable<T> collection)
         {
-            DataTable dt = new DataTable("DataTable");
+            DataTable dataTable = new DataTable("DataTable");
             Type t = typeof(T);
-            PropertyInfo[] pia = t.GetProperties();
+            PropertyInfo[] propertyInfos = t.GetProperties();
 
             //Inspect the properties and create the columns in the DataTable
-            foreach (PropertyInfo pi in pia)
+            foreach (PropertyInfo propertyInfo in propertyInfos)
             {
-                Type ColumnType = pi.PropertyType;
+                Type ColumnType = propertyInfo.PropertyType;
                 if ((ColumnType.IsGenericType))
                 {
                     ColumnType = ColumnType.GetGenericArguments()[0];
                 }
-                //if (pi.Name != "MatchesHistory" && pi.Name != "SportHistory" && pi.Name != "EventHistories")
-                //{
-                dt.Columns.Add(pi.Name, ColumnType);
-                //}
+                dataTable.Columns.Add(propertyInfo.Name, ColumnType);
             }
 
             //Populate the data table
             foreach (T item in collection)
             {
-                DataRow dr = dt.NewRow();
-                dr.BeginEdit();
-                foreach (PropertyInfo pi in pia)
+                DataRow dataRow = dataTable.NewRow();
+                dataRow.BeginEdit();
+                foreach (PropertyInfo propertyInfo in propertyInfos)
                 {
-                    if (pi.GetValue(item, null) != null)
+                    if (propertyInfo.GetValue(item, null) != null)
                     {
-                        //if (pi.Name != "MatchesHistory" && pi.Name != "SportHistory" && pi.Name != "EventHistories")
-                        //{
-                        dr[pi.Name] = pi.GetValue(item, null);
-                        //}
+                        dataRow[propertyInfo.Name] = propertyInfo.GetValue(item, null);
                     }
                 }
-                dr.EndEdit();
-                dt.Rows.Add(dr);
+                dataRow.EndEdit();
+                dataTable.Rows.Add(dataRow);
             }
-            return dt;
+
+            return dataTable;
         }
 
-        public static IEnumerable<TSource> DistinctBy<TSource, TKey>
-    (this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
+        public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
         {
             HashSet<TKey> seenKeys = new HashSet<TKey>();
             foreach (TSource element in source)

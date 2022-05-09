@@ -1,4 +1,5 @@
-﻿using BettingAPI.DataContext.Models;
+﻿using BettingAPI.DataContext.Infrastructure;
+using BettingAPI.DataContext.Models;
 using BettingAPI.DataContext.Models.Active;
 using BettingAPI.DataContext.Models.ChangeLogs;
 using BettingAPI.DataContext.Models.History;
@@ -47,55 +48,6 @@ namespace BettingAPI.DataContext
             modelBuilder.ApplyConfiguration(new BetHistoryConfig());
             modelBuilder.ApplyConfiguration(new OddHistoryConfig());
             modelBuilder.ApplyConfiguration(new OddConfig());
-        }
-
-        public class EventHistoryConfig : IEntityTypeConfiguration<EventHistory>
-        {
-            public void Configure(EntityTypeBuilder<EventHistory> builder)
-            {
-                builder.HasOne(e => e.SportHistory)
-                    .WithMany(s => s.EventHistories)
-                    .HasForeignKey(e => e.SportHistoryId);
-            }
-        }
-
-        public class MatchHistoryConfig : IEntityTypeConfiguration<MatchHistory>
-        {
-            public void Configure(EntityTypeBuilder<MatchHistory> builder)
-            {
-                builder.HasKey(m => new { m.Id, m.MatchType, m.StartDate });
-
-                builder.HasOne(m => m.EventHistory)
-                    .WithMany(e => e.MatchHistories)
-                    .HasForeignKey(m => m.EventHistoryId);
-            }
-        }
-
-        public class BetHistoryConfig : IEntityTypeConfiguration<BetHistory>
-        {
-            public void Configure(EntityTypeBuilder<BetHistory> builder)
-            {
-                builder.HasOne(b => b.MatchHistory)
-                    .WithMany(m => m.BetHistories)
-                    .HasForeignKey(b => new { b.MatchHistoryId, b.MatchType, b.MatchStartDate });
-            }
-        }
-
-        public class OddHistoryConfig : IEntityTypeConfiguration<OddHistory>
-        {
-            public void Configure(EntityTypeBuilder<OddHistory> builder)
-            {
-                builder.HasKey(o => new { o.Id, o.Value });
-                builder.Property(o => o.Value).HasColumnType("decimal(6,2)").IsRequired(true);
-            }
-        }
-        
-        public class OddConfig : IEntityTypeConfiguration<Odd>
-        {
-            public void Configure(EntityTypeBuilder<Odd> builder)
-            {
-                builder.Property(x => x.Value).HasColumnType("decimal(6,2)").IsRequired(true);
-            }
         }
     }
 }

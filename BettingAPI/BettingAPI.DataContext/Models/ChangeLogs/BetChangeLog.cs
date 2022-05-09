@@ -16,6 +16,6 @@ namespace BettingAPI.DataContext.Models.ChangeLogs
 
         public string ActionType { get; set; }
 
-        public DateTime DateCreated { get; set; } = DateTime.Now;
+        public DateTime DateCreated { get; set; }
     }
 }

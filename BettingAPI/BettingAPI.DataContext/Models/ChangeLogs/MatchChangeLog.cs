@@ -1,4 +1,5 @@
 ﻿using System;
+using BettingAPI.DataContext.Enums;
 
 namespace BettingAPI.DataContext.Models
 {
@@ -18,13 +19,6 @@ namespace BettingAPI.DataContext.Models
 
         public string ActionType { get; set; }
 
-        public DateTime DateCreated { get; set; } = DateTime.Now;
-    }
-
-    public enum MatchType
-    {
-        PreMatch,
-        Live,
-        OutRight
+        public DateTime DateCreated { get; set; }
     }
 }

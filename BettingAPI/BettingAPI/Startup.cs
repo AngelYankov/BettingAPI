@@ -20,7 +20,6 @@ namespace BettingAPI
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
 
@@ -35,13 +34,12 @@ namespace BettingAPI
                 options.UseSqlServer(this.Configuration.GetConnectionString("DefaultConnection"));
             });
 
-            services.AddScoped<IBettingOddsService, BettingOddsService>();
             services.AddScoped<IMatchService, MatchService>();
-            services.AddScoped<IBettingService, BettingService>();
             services.AddScoped<IBettingServiceNew, BettingServiceNew>();
+            //services.AddScoped<IBettingService, BettingService>();
+            //services.AddScoped<IBettingOddsService, BettingOddsService>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())

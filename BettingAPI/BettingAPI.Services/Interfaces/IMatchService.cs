@@ -1,5 +1,4 @@
-﻿using BettingAPI.DataContext.Models.Active;
-using BettingAPI.Services.Models;
+﻿using BettingAPI.Services.Models;
 using System.Collections.Generic;
 
 namespace BettingAPI.Services.Interfaces

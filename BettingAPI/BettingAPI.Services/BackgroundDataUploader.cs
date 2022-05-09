@@ -1,5 +1,4 @@
-﻿using BettingAPI.Services.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Threading;
@@ -9,12 +8,12 @@ namespace BettingAPI.Services
 {
     public class BackgroundDataUploader : IHostedService, IDisposable
     {
-        private readonly IBettingService bettingService;
+        private readonly IBettingServiceNew bettingService;
         private Timer timer;
 
         public BackgroundDataUploader(IServiceProvider serviceProvider)
         {
-            this.bettingService = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<IBettingService>();
+            this.bettingService = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<IBettingServiceNew>();
         }
 
         public void Dispose()
@@ -26,9 +25,9 @@ namespace BettingAPI.Services
         {
             timer = new Timer(t =>
             {
-                this.bettingService.SaveData();
+                this.bettingService.Save();
             }
-            , null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+            , null, TimeSpan.Zero, TimeSpan.FromSeconds(60));
 
             return Task.CompletedTask;
         }
