@@ -1,5 +1,4 @@
-﻿using BettingAPI.DataContext;
-using BettingAPI.DataContext.Enums;
+﻿using BettingAPI.DataContext.Enums;
 using BettingAPI.DataContext.Infrastructure;
 using BettingAPI.DataContext.Models.History;
 using BettingAPI.Services.Models;
@@ -14,7 +13,7 @@ using System.Xml;
 
 namespace BettingAPI.Services
 {
-    public class BettingServiceNew : IBettingServiceNew
+    public class BettingService : IBettingService
     {
         private const string SportNodes = "//Sport";
         private const string EventNodes = "//Event";
@@ -38,7 +37,7 @@ namespace BettingAPI.Services
 
         private readonly string connectionString;
 
-        public BettingServiceNew(IConfiguration configuration)
+        public BettingService(IConfiguration configuration)
         {
             this.connectionString = configuration.GetConnectionString("DefaultConnection");
         }

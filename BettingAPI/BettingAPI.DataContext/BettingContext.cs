@@ -4,7 +4,6 @@ using BettingAPI.DataContext.Models.Active;
 using BettingAPI.DataContext.Models.ChangeLogs;
 using BettingAPI.DataContext.Models.History;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace BettingAPI.DataContext
 {

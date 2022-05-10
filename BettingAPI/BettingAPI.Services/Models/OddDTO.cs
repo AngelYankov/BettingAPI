@@ -1,5 +1,4 @@
 ﻿using BettingAPI.DataContext.Models.Active;
-using BettingAPI.DataContext.Models.History;
 
 namespace BettingAPI.Services.Models
 {

@@ -1,6 +1,6 @@
 ﻿namespace BettingAPI.Services
 {
-    public interface IBettingServiceNew
+    public interface IBettingService
     {
         void Save();
     }

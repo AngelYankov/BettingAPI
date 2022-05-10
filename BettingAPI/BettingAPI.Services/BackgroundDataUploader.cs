@@ -8,12 +8,12 @@ namespace BettingAPI.Services
 {
     public class BackgroundDataUploader : IHostedService, IDisposable
     {
-        private readonly IBettingServiceNew bettingService;
+        private readonly IBettingService bettingService;
         private Timer timer;
 
         public BackgroundDataUploader(IServiceProvider serviceProvider)
         {
-            this.bettingService = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<IBettingServiceNew>();
+            this.bettingService = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<IBettingService>();
         }
 
         public void Dispose()

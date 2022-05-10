@@ -10,10 +10,10 @@ namespace BettingAPI.Controllers
     [Route("[controller]")]
     public class BettingController : ControllerBase
     {
-        private readonly IBettingServiceNew bettingServiceNew;
+        private readonly IBettingService bettingServiceNew;
         private readonly IMatchService matchService;
 
-        public BettingController(IBettingServiceNew bettingServiceNew, IMatchService matchService)
+        public BettingController(IBettingService bettingServiceNew, IMatchService matchService)
         {
             this.bettingServiceNew = bettingServiceNew;
             this.matchService = matchService;
