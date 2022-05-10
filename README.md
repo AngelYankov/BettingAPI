@@ -13,4 +13,4 @@ Application that retrieves betting data from an online XML source and saves it t
 * Before starting the application execute the BettingDbScript.sql file found in the repository to create the needed database on your local machine
 
 ## Database Diagram
-![Alt text](https://github.com/AngelYankov/BettingAPI/-/raw/main/DbDiagram.png)
+![Alt text](https://github.com/AngelYankov/BettingAPI/blob/main/DbDiagram.PNG)
