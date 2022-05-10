@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace BettingAPI
+namespace BettingAPI.API
 {
     public class Program
     {
@@ -17,8 +17,8 @@ namespace BettingAPI
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                })
-            .ConfigureServices(services =>
-                    services.AddHostedService<BackgroundDataUploader>());
+                });
+            //.ConfigureServices(services =>
+              //      services.AddHostedService<BackgroundDataUploader>());
     }
 }

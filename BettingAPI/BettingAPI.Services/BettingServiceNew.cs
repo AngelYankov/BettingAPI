@@ -1,4 +1,5 @@
 ﻿using BettingAPI.DataContext;
+using BettingAPI.DataContext.Enums;
 using BettingAPI.DataContext.Infrastructure;
 using BettingAPI.DataContext.Models.History;
 using BettingAPI.Services.Models;
@@ -35,15 +36,16 @@ namespace BettingAPI.Services
         private const string MatchTypeAttribute = "MatchType";
         private const string MatchStartDateAttribute = "MatchStartDate";
 
-        private readonly BettingContext context;
         private readonly string connectionString;
 
-        public BettingServiceNew(BettingContext context, IConfiguration configuration)
+        public BettingServiceNew(IConfiguration configuration)
         {
-            this.context = context;
             this.connectionString = configuration.GetConnectionString("DefaultConnection");
         }
 
+        /// <summary>
+        /// Saves all data from the XML
+        /// </summary>
         public void Save()
         {
             var document = TransformXml();
@@ -57,7 +59,7 @@ namespace BettingAPI.Services
             var allMatches = MapMatches(document);
             AddMatchHistories(allMatches);
 
-            var allBets = MapBets(document, allMatches);
+            var allBets = MapBets(document);
             AddBetHistories(allBets);
 
             var allOdds = MapOdds(document);
@@ -70,6 +72,237 @@ namespace BettingAPI.Services
             AddOdds(allOdds);
         }
 
+        /// <summary>
+        /// Adds attributes with data need to XML
+        /// </summary>
+        /// <returns>New XML with added data</returns>
+        private XmlDocument TransformXml()
+        {
+            var document = LoadFile();
+
+            var sports = document.SelectNodes(SportNodes);
+
+            for (int m = 0; m < sports.Count; m++)
+            {
+                var sportEntity = new SportHistory()
+                {
+                    Id = Int32.Parse(sports[m].SelectSingleNode(IdAttribute).InnerText)
+                };
+
+                var events = sports[m].ChildNodes;
+
+                for (int i = 0; i < events.Count; i++)
+                {
+                    var sportIdAttribute = document.CreateAttribute(SportIdAttribute);
+                    sportIdAttribute.Value = sportEntity.Id.ToString();
+                    events[i].Attributes.Append(sportIdAttribute);
+
+                    var eventEntity = new EventHistory()
+                    {
+                        Id = Int32.Parse(events[i].SelectSingleNode(IdAttribute).InnerText),
+                    };
+
+                    var matches = events[i].ChildNodes;
+
+                    for (int j = 0; j < matches.Count; j++)
+                    {
+                        var eventIdAttribute = document.CreateAttribute(EventIdAttribute);
+                        eventIdAttribute.Value = eventEntity.Id.ToString();
+                        matches[j].Attributes.Append(eventIdAttribute);
+
+                        var matchEntity = new MatchHistory()
+                        {
+                            Id = Int32.Parse(matches[j].SelectSingleNode(IdAttribute).InnerText),
+                            MatchType = Enum.Parse<MatchType>(matches[j].SelectSingleNode("@" + MatchTypeAttribute).InnerText),
+                            StartDate = DateTime.Parse(matches[j].SelectSingleNode(StartDateAttribute).InnerText)
+                        };
+
+                        var bets = matches[j].ChildNodes;
+
+                        for (int k = 0; k < bets.Count; k++)
+                        {
+                            var attributeMatchId = document.CreateAttribute(MatchIdAttribute);
+                            attributeMatchId.Value = matchEntity.Id.ToString();
+                            bets[k].Attributes.Append(attributeMatchId);
+
+                            var attributeMatchType = document.CreateAttribute(MatchTypeAttribute);
+                            attributeMatchType.Value = matchEntity.MatchType.ToString();
+                            bets[k].Attributes.Append(attributeMatchType);
+
+                            var attributeMatchStartDate = document.CreateAttribute(MatchStartDateAttribute);
+                            attributeMatchStartDate.Value = matchEntity.StartDate.ToString();
+                            bets[k].Attributes.Append(attributeMatchStartDate);
+
+                            var betEntity = new BetHistory()
+                            {
+                                Id = Int32.Parse(bets[k].SelectSingleNode(IdAttribute).InnerText),
+                            };
+
+                            var odds = bets[k].ChildNodes;
+
+                            for (int l = 0; l < odds.Count; l++)
+                            {
+                                var attributeBetId = document.CreateAttribute(BetIdAttribute);
+                                attributeBetId.Value = betEntity.Id.ToString();
+                                odds[l].Attributes.Append(attributeBetId);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return document;
+        }
+
+        /// <summary>
+        /// Loads XML data from source
+        /// </summary>
+        /// <returns>Loaded XML data</returns>
+        private XmlDocument LoadFile()
+        {
+            XmlDocument doc = new XmlDocument();
+            string url = "https://sports.ultraplay.net/sportsxml?clientKey=9C5E796D-4D54-42FD-A535-D7E77906541A&sportId=2357&days=7";
+
+            using (var client = new WebClient())
+            {
+                string result = client.DownloadString(url);
+                doc.LoadXml(result);
+            }
+
+            return doc;
+        }
+
+        /// <summary>
+        /// Maps all Sport nodes to objects from XML document
+        /// </summary>
+        /// <param name="document">XML document with data</param>
+        /// <returns>List with all Sport objects mapped from XML document</returns>
+        private IEnumerable<SportHistoryDTO> MapSports(XmlDocument document)
+        {
+            var allSports = new List<SportHistory>();
+            var sports = document.SelectNodes(SportNodes);
+            for (int i = 0; i < sports.Count; i++)
+            {
+                var sport = new SportHistory()
+                {
+                    Id = Int32.Parse(sports[i].SelectSingleNode(IdAttribute).InnerText),
+                    Name = sports[i].SelectSingleNode(NameAttribute).InnerText,
+                };
+
+                allSports.Add(sport);
+            }
+
+            return allSports.Select(s => new SportHistoryDTO(s));
+        }
+
+        /// <summary>
+        /// Maps all Event nodes to objects from XML document
+        /// </summary>
+        /// <param name="document">XML document with data</param>
+        /// <returns>List with all Event objects mapped from XML document</returns>
+        private IEnumerable<EventHistoryDTO> MapEvents(XmlDocument document)
+        {
+            var allEvents = new List<EventHistory>();
+            var events = document.SelectNodes(EventNodes);
+            for (int i = 0; i < events.Count; i++)
+            {
+                var eventHistory = new EventHistory()
+                {
+                    Id = Int32.Parse(events[i].SelectSingleNode(IdAttribute).InnerText),
+                    CategoryID = Int32.Parse(events[i].SelectSingleNode(CategoryAttribute).InnerText),
+                    Name = events[i].SelectSingleNode(NameAttribute).InnerText,
+                    IsLive = events[i].SelectSingleNode(IsLiveAttribute).InnerText == "true",
+                    SportHistoryId = Int32.Parse(events[i].SelectSingleNode("@" + SportIdAttribute).InnerText),
+                };
+
+                allEvents.Add(eventHistory);
+            }
+
+            return allEvents.Select(e => new EventHistoryDTO(e));
+        }
+
+        /// <summary>
+        /// Maps all Match nodes to objects from XML document
+        /// </summary>
+        /// <param name="document">XML document with data</param>
+        /// <returns>List with all Match objects mapped from XML document</returns>
+        private IEnumerable<MatchHistoryDTO> MapMatches(XmlDocument document)
+        {
+            var allMatches = new List<MatchHistory>();
+            var matches = document.SelectNodes(MatchNodes);
+            for (int i = 0; i < matches.Count; i++)
+            {
+                var match = new MatchHistory()
+                {
+                    Id = Int32.Parse(matches[i].SelectSingleNode(IdAttribute).InnerText),
+                    Name = matches[i].SelectSingleNode(NameAttribute).InnerText,
+                    StartDate = DateTime.Parse(matches[i].SelectSingleNode(StartDateAttribute).InnerText),
+                    MatchType = Enum.Parse<MatchType>(matches[i].SelectSingleNode("@" + MatchTypeAttribute).InnerText),
+                    EventHistoryId = Int32.Parse(matches[i].SelectSingleNode("@" + EventIdAttribute).InnerText),
+                };
+                allMatches.Add(match);
+            }
+
+            return allMatches.Select(m => new MatchHistoryDTO(m));
+        }
+
+        /// <summary>
+        /// Maps all Bet nodes to objects from XML document
+        /// </summary>
+        /// <param name="document">XML document with data</param>
+        /// <returns>List with all Bet objects mapped from XML document</returns>
+        private IEnumerable<BetHistoryDTO> MapBets(XmlDocument document)
+        {
+            var allBets = new List<BetHistory>();
+            var bets = document.SelectNodes(BetNodes);
+            for (int i = 0; i < bets.Count; i++)
+            {
+                var bet = new BetHistory()
+                {
+                    Id = Int32.Parse(bets[i].SelectSingleNode(IdAttribute).InnerText),
+                    Name = bets[i].SelectSingleNode(NameAttribute).InnerText,
+                    IsLive = bets[i].SelectSingleNode(IsLiveAttribute).InnerText == "true",
+                    MatchHistoryId = Int32.Parse(bets[i].SelectSingleNode("@" + MatchIdAttribute).InnerText),
+                    MatchType = Enum.Parse<MatchType>(bets[i].SelectSingleNode("@" + MatchTypeAttribute).InnerText),
+                    MatchStartDate = DateTime.Parse(bets[i].SelectSingleNode("@" + MatchStartDateAttribute).InnerText)
+                };
+
+                allBets.Add(bet);
+            }
+
+            return allBets.Select(b => new BetHistoryDTO(b));
+        }
+
+        /// <summary>
+        /// Maps all Odd nodes to objects from XML document
+        /// </summary>
+        /// <param name="document">XML document with data</param>
+        /// <returns>List with all Odd objects mapped from XML document</returns>
+        private IEnumerable<OddHistoryDTO> MapOdds(XmlDocument document)
+        {
+            var allOdds = new List<OddHistory>();
+            var odds = document.SelectNodes(OddNodes);
+            for (int i = 0; i < odds.Count; i++)
+            {
+                var odd = new OddHistory()
+                {
+                    Id = Int32.Parse(odds[i].SelectSingleNode(IdAttribute).InnerText),
+                    Name = odds[i].SelectSingleNode(NameAttribute).InnerText,
+                    Value = Convert.ToDecimal(odds[i].SelectSingleNode(ValueAttribute).InnerText),
+                    SpecialValueBet = odds[i].SelectSingleNode(SpecialBetValueAttribute)?.InnerText,
+                    BetHistoryId = Int32.Parse(odds[i].SelectSingleNode("@" + BetIdAttribute).InnerText),
+                };
+
+                allOdds.Add(odd);
+            }
+
+            return allOdds.Select(o => new OddHistoryDTO(o));
+        }
+
+        /// <summary>
+        /// Adds all Sport objects from XML to SportHistories database table
+        /// </summary>
+        /// <param name="allSports">All Sport objects from current XML document</param>
         private void AddSportHistories(IEnumerable<SportHistoryDTO> allSports)
         {
             using (SqlConnection connection = new SqlConnection() { ConnectionString = connectionString })
@@ -115,7 +348,11 @@ namespace BettingAPI.Services
             }
         }
 
-        private void AddEventHistories(IEnumerable<EventHistoryDTO> eventHistories)
+        /// <summary>
+        /// Adds all Event objects from XML to EventtHistories database table
+        /// </summary>
+        /// <param name="allEvents">All Event objects from current XML document</param>
+        private void AddEventHistories(IEnumerable<EventHistoryDTO> allEvents)
         {
             using (SqlConnection connection = new SqlConnection() { ConnectionString = connectionString })
             {
@@ -137,7 +374,7 @@ namespace BettingAPI.Services
                         using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
                         {
                             bulkCopy.DestinationTableName = "#TmpEventTable";
-                            bulkCopy.WriteToServer(eventHistories.ToDataTable());
+                            bulkCopy.WriteToServer(allEvents.ToDataTable());
                         }
 
                         command.CommandText = @"
@@ -163,7 +400,11 @@ namespace BettingAPI.Services
             }
         }
 
-        private void AddMatchHistories(IEnumerable<MatchHistoryDTO> matchHistories)
+        /// <summary>
+        /// Adds all new Match objects from XML to MatchHistories database table
+        /// </summary>
+        /// <param name="allMatches">All Match objects from current XML document</param>
+        private void AddMatchHistories(IEnumerable<MatchHistoryDTO> allMatches)
         {
             using (SqlConnection connection = new SqlConnection() { ConnectionString = connectionString })
             {
@@ -185,25 +426,18 @@ namespace BettingAPI.Services
                         using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
                         {
                             bulkCopy.DestinationTableName = "#TmpMatchTable";
-                            bulkCopy.WriteToServer(matchHistories.ToDataTable());
+                            bulkCopy.WriteToServer(allMatches.ToDataTable());
                         }
 
                         command.CommandText = @"
-                            --MERGE INTO dbo.MatchHistories AS TARGET
-                            --USING dbo.#TmpMatchTable AS SOURCE
-                            --ON TARGET.Id = SOURCE.Id
-                            --WHEN NOT MATCHED BY TARGET THEN
-                            --    INSERT (Id, Name, StartDate, MatchType, EventHistoryId)
-                            --    VALUES (SOURCE.Id, SOURCE.Name, SOURCE.StartDate, SOURCE.MatchType, SOURCE.EventHistoryId);
-
                             MERGE INTO dbo.MatchHistories AS TARGET
                             USING dbo.#TmpMatchTable AS SOURCE
-                            ON TARGET.Id = SOURCE.Id AND --(
-                               TARGET.StartDate = SOURCE.StartDate AND --OR
-                               TARGET.MatchType = SOURCE.MatchType --) 
+                            ON TARGET.Id = SOURCE.Id AND
+                               TARGET.StartDate = SOURCE.StartDate AND
+                               TARGET.MatchType = SOURCE.MatchType
                             WHEN NOT MATCHED BY TARGET THEN
-                                INSERT (Id, Name, StartDate, MatchType, EventHistoryId)
-                                VALUES (SOURCE.Id, SOURCE.Name, SOURCE.StartDate, SOURCE.MatchType, SOURCE.EventHistoryId);
+                                INSERT (Id, Name, StartDate, MatchType, EventHistoryId, DateCreated)
+                                VALUES (SOURCE.Id, SOURCE.Name, SOURCE.StartDate, SOURCE.MatchType, SOURCE.EventHistoryId, GETDATE());
                             DROP TABLE #TmpMatchTable";
 
                         command.ExecuteNonQuery();
@@ -220,7 +454,11 @@ namespace BettingAPI.Services
             }
         }
 
-        private void AddBetHistories(IEnumerable<BetHistoryDTO> betHistories)
+        /// <summary>
+        /// Adds all new Bet objects from XML to BetHistories database table
+        /// </summary>
+        /// <param name="allBets">All Bet objects from current XML document</param>
+        private void AddBetHistories(IEnumerable<BetHistoryDTO> allBets)
         {
             using (SqlConnection connection = new SqlConnection() { ConnectionString = connectionString })
             {
@@ -241,26 +479,19 @@ namespace BettingAPI.Services
                         using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
                         {
                             bulkCopy.DestinationTableName = "#TmpBetTable";
-                            bulkCopy.WriteToServer(betHistories.ToDataTable());
+                            bulkCopy.WriteToServer(allBets.ToDataTable());
                         }
 
                         command.CommandTimeout = 3000;
 
                         command.CommandText = @"
-                            --MERGE INTO dbo.BetHistories AS TARGET
-                            --USING dbo.#TmpBetTable AS SOURCE
-                            --ON TARGET.Id = SOURCE.Id
-                            --WHEN NOT MATCHED BY TARGET THEN
-                            --    INSERT (Id, Name, IsLive, MatchHistoryId)
-                            --    VALUES (SOURCE.Id, SOURCE.Name, SOURCE.IsLive, SOURCE.MatchHistoryId);
-
                             MERGE INTO dbo.BetHistories AS TARGET
                             USING dbo.#TmpBetTable AS SOURCE
                             ON TARGET.Id = SOURCE.Id AND
                                TARGET.IsLive = SOURCE.IsLive
                             WHEN NOT MATCHED BY TARGET THEN
-                                INSERT (Id, Name, IsLive, MatchHistoryId)
-                                VALUES (SOURCE.Id, SOURCE.Name, SOURCE.IsLive, SOURCE.MatchHistoryId);
+                                INSERT (Id, Name, IsLive, MatchHistoryId, DateCreated)
+                                VALUES (SOURCE.Id, SOURCE.Name, SOURCE.IsLive, SOURCE.MatchHistoryId, GETDATE());
                             DROP TABLE #TmpBetTable";
 
                         command.ExecuteNonQuery();
@@ -277,7 +508,11 @@ namespace BettingAPI.Services
             }
         }
 
-        private void AddOddHistories(IEnumerable<OddHistoryDTO> oddHistories)
+        /// <summary>
+        /// Adds all new Odd objects from XML to OddHistories database table
+        /// </summary>
+        /// <param name="allOdds">All Odd objects from current XML document</param>
+        private void AddOddHistories(IEnumerable<OddHistoryDTO> allOdds)
         {
             using (SqlConnection connection = new SqlConnection() { ConnectionString = connectionString })
             {
@@ -299,26 +534,19 @@ namespace BettingAPI.Services
                         using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
                         {
                             bulkCopy.DestinationTableName = "#TmpOddTable";
-                            bulkCopy.WriteToServer(oddHistories.ToDataTable());
+                            bulkCopy.WriteToServer(allOdds.ToDataTable());
                         }
 
                         command.CommandTimeout = 3000;
 
                         command.CommandText = @"
-                            --MERGE INTO dbo.OddHistories AS TARGET
-                            --USING dbo.#TmpOddTable AS SOURCE
-                            --ON TARGET.Id = SOURCE.Id
-                            --WHEN NOT MATCHED BY TARGET THEN
-                            --    INSERT (Id, Name, Value, SpecialValueBet, BetHistoryId)
-                            --    VALUES (SOURCE.Id, SOURCE.Name, SOURCE.Value, SOURCE.SpecialValueBet, SOURCE.BetHistoryId);
-
                             MERGE INTO dbo.OddHistories AS TARGET
                             USING dbo.#TmpOddTable AS SOURCE
                             ON TARGET.Id = SOURCE.Id AND
                                TARGET.Value = SOURCE.Value
                             WHEN NOT MATCHED BY TARGET THEN
-                                INSERT (Id, Name, Value, SpecialValueBet, BetHistoryId)
-                                VALUES (SOURCE.Id, SOURCE.Name, SOURCE.Value, SOURCE.SpecialValueBet, SOURCE.BetHistoryId);
+                                INSERT (Id, Name, Value, SpecialValueBet, BetHistoryId, DateCreated)
+                                VALUES (SOURCE.Id, SOURCE.Name, SOURCE.Value, SOURCE.SpecialValueBet, SOURCE.BetHistoryId, GETDATE());
                             DROP TABLE #TmpOddTable";
 
                         command.ExecuteNonQuery();
@@ -335,6 +563,10 @@ namespace BettingAPI.Services
             }
         }
 
+        /// <summary>
+        /// Adds, Updates and Deletes Sport objects from Sport database table according to current XML document
+        /// </summary>
+        /// <param name="allSports">All Sport objects from current XML document</param>
         private void AddSports(IEnumerable<SportHistoryDTO> allSports)
         {
             using (SqlConnection connection = new SqlConnection() { ConnectionString = connectionString })
@@ -384,7 +616,11 @@ namespace BettingAPI.Services
             }
         }
 
-        private void AddEvents(IEnumerable<EventHistoryDTO> eventHistories)
+        /// <summary>
+        /// Adds, Updates and Deletes Event objects from Event database table according to current XML document
+        /// </summary>
+        /// <param name="allEvents">All Event objects from current XML document</param>
+        private void AddEvents(IEnumerable<EventHistoryDTO> allEvents)
         {
             using (SqlConnection connection = new SqlConnection() { ConnectionString = connectionString })
             {
@@ -406,7 +642,7 @@ namespace BettingAPI.Services
                         using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
                         {
                             bulkCopy.DestinationTableName = "#TmpEventTable";
-                            bulkCopy.WriteToServer(eventHistories.ToDataTable());
+                            bulkCopy.WriteToServer(allEvents.ToDataTable());
                         }
 
                         command.CommandText = @"
@@ -436,7 +672,12 @@ namespace BettingAPI.Services
             }
         }
 
-        private void AddMatches(IEnumerable<MatchHistoryDTO> matchHistories)
+        /// <summary>
+        /// Adds, Updates and Deletes Match objects from Match database table according to current XML document
+        /// Adds new MatchChangeLog objects to MatchChangeLogs database table when records are updated or deleted in Match database table
+        /// </summary>
+        /// <param name="allMatches">All Match objects from current XML document</param>
+        private void AddMatches(IEnumerable<MatchHistoryDTO> allMatches)
         {
             using (SqlConnection connection = new SqlConnection() { ConnectionString = connectionString })
             {
@@ -458,7 +699,7 @@ namespace BettingAPI.Services
                         using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
                         {
                             bulkCopy.DestinationTableName = "#TmpMatchTable";
-                            bulkCopy.WriteToServer(matchHistories.ToDataTable());
+                            bulkCopy.WriteToServer(allMatches.ToDataTable());
                         }
 
                         command.CommandText = @"
@@ -496,7 +737,9 @@ namespace BettingAPI.Services
                                 FROM (
                                     MERGE INTO dbo.Matches AS TARGET
                                     USING dbo.#TmpMatchTable AS SOURCE
-                                    ON TARGET.Id = SOURCE.Id
+                                    ON TARGET.Id = SOURCE.Id AND
+                                       TARGET.MatchType = SOURCE.MatchType AND
+                                       TARGET.StartDate = SOURCE.StartDate
                                     WHEN NOT MATCHED BY TARGET THEN
                                         INSERT (Id, Name, StartDate, MatchType, EventId)
                                         VALUES (SOURCE.Id, SOURCE.Name, SOURCE.StartDate, SOURCE.MatchType, SOURCE.EventIdentification)
@@ -521,7 +764,12 @@ namespace BettingAPI.Services
             }
         }
 
-        private void AddBets(IEnumerable<BetHistoryDTO> betHistories)
+        /// <summary>
+        /// Adds, Updates and Deletes Bet objects from Bet database table according to current XML document
+        /// Adds new BetChangeLog objects to BetChangeLogs database table when records are updated or deleted in Bet database table
+        /// </summary>
+        /// <param name="allBets">All Bet objects from current XML document</param>
+        private void AddBets(IEnumerable<BetHistoryDTO> allBets)
         {
             using (SqlConnection connection = new SqlConnection() { ConnectionString = connectionString })
             {
@@ -542,10 +790,8 @@ namespace BettingAPI.Services
                         using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
                         {
                             bulkCopy.DestinationTableName = "#TmpBetTable";
-                            bulkCopy.WriteToServer(betHistories.ToDataTable());
+                            bulkCopy.WriteToServer(allBets.ToDataTable());
                         }
-
-                        command.CommandTimeout = 3000;
 
                         command.CommandText = @"
                             INSERT INTO dbo.BetChangeLogs
@@ -578,7 +824,8 @@ namespace BettingAPI.Services
                                 FROM (
                                     MERGE INTO dbo.Bets AS TARGET
                                     USING dbo.#TmpBetTable AS SOURCE
-                                    ON TARGET.Id = SOURCE.Id
+                                    ON TARGET.Id = SOURCE.Id AND
+                                       TARGET.IsLive = SOURCE.IsLive
                                     WHEN NOT MATCHED BY TARGET THEN
                                         INSERT (Id, Name, IsLive, MatchId)
                                         VALUES (SOURCE.Id, SOURCE.Name, SOURCE.IsLive, SOURCE.MatchIdentification)
@@ -603,7 +850,12 @@ namespace BettingAPI.Services
             }
         }
 
-        private void AddOdds(IEnumerable<OddHistoryDTO> oddHistories)
+        /// <summary>
+        /// Adds, Updates and Deletes Odd objects from Odd database table according to current XML document
+        /// Adds new OddChangeLog objects to OddChangeLogs database table when records are updated or deleted in Odd database table
+        /// </summary>
+        /// <param name="allOdds">All Odd objects from current XML document</param>
+        private void AddOdds(IEnumerable<OddHistoryDTO> allOdds)
         {
             using (SqlConnection connection = new SqlConnection() { ConnectionString = connectionString })
             {
@@ -625,10 +877,8 @@ namespace BettingAPI.Services
                         using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
                         {
                             bulkCopy.DestinationTableName = "#TmpOddTable";
-                            bulkCopy.WriteToServer(oddHistories.ToDataTable());
+                            bulkCopy.WriteToServer(allOdds.ToDataTable());
                         }
-
-                        command.CommandTimeout = 3000;
 
                         command.CommandText = @"
                             INSERT INTO dbo.OddChangeLogs
@@ -663,7 +913,8 @@ namespace BettingAPI.Services
                                 FROM (
                                     MERGE INTO dbo.Odds AS TARGET
                                     USING dbo.#TmpOddTable AS SOURCE
-                                    ON TARGET.Id = SOURCE.Id 
+                                    ON TARGET.Id = SOURCE.Id AND
+                                       TARGET.Value = SOURCE.Value
                                     WHEN NOT MATCHED BY TARGET THEN
                                         INSERT (Id, Name, Value, SpecialValueBet, BetId)
                                         VALUES (SOURCE.Id, SOURCE.Name, SOURCE.Value, SOURCE.SpecialValueBet, SOURCE.BetIdentification)
@@ -686,202 +937,6 @@ namespace BettingAPI.Services
                     }
                 }
             }
-        }
-
-        private IEnumerable<SportHistoryDTO> MapSports(XmlDocument document)
-        {
-            var allSports = new List<SportHistory>();
-            var sports = document.SelectNodes(SportNodes);
-            for (int i = 0; i < sports.Count; i++)
-            {
-                var sport = new SportHistory()
-                {
-                    Id = Int32.Parse(sports[i].SelectSingleNode(IdAttribute).InnerText),
-                    Name = sports[i].SelectSingleNode(NameAttribute).InnerText,
-                };
-
-                allSports.Add(sport);
-            }
-
-            return allSports.Select(s => new SportHistoryDTO(s));
-        }
-
-        private IEnumerable<EventHistoryDTO> MapEvents(XmlDocument document)
-        {
-            var allEvents = new List<EventHistory>();
-            var events = document.SelectNodes(EventNodes);
-            for (int i = 0; i < events.Count; i++)
-            {
-                var eventHistory = new EventHistory()
-                {
-                    Id = Int32.Parse(events[i].SelectSingleNode(IdAttribute).InnerText),
-                    CategoryID = Int32.Parse(events[i].SelectSingleNode(CategoryAttribute).InnerText),
-                    Name = events[i].SelectSingleNode(NameAttribute).InnerText,
-                    IsLive = events[i].SelectSingleNode(IsLiveAttribute).InnerText == "true",
-                    SportHistoryId = Int32.Parse(events[i].SelectSingleNode("@" + SportIdAttribute).InnerText),
-                };
-
-                allEvents.Add(eventHistory);
-            }
-
-            return allEvents.Select(e => new EventHistoryDTO(e));
-        }
-
-        private IEnumerable<MatchHistoryDTO> MapMatches(XmlDocument document)
-        {
-            var allMatches = new List<MatchHistory>();
-            var matches = document.SelectNodes(MatchNodes);
-            for (int i = 0; i < matches.Count; i++)
-            {
-                var match = new MatchHistory()
-                {
-                    Id = Int32.Parse(matches[i].SelectSingleNode(IdAttribute).InnerText),
-                    Name = matches[i].SelectSingleNode(NameAttribute).InnerText,
-                    StartDate = DateTime.Parse(matches[i].SelectSingleNode(StartDateAttribute).InnerText),
-                    MatchType = Enum.Parse<MatchType>(matches[i].SelectSingleNode("@" + MatchTypeAttribute).InnerText),
-                    EventHistoryId = Int32.Parse(matches[i].SelectSingleNode("@" + EventIdAttribute).InnerText),
-                };
-                allMatches.Add(match);
-            }
-
-            return allMatches.Select(m => new MatchHistoryDTO(m));
-        }
-
-        private IEnumerable<BetHistoryDTO> MapBets(XmlDocument document, IEnumerable<MatchHistoryDTO> allMatches)
-        {
-            var allBets = new List<BetHistory>();
-            var bets = document.SelectNodes(BetNodes);
-            for (int i = 0; i < bets.Count; i++)
-            {
-                var bet = new BetHistory()
-                {
-                    Id = Int32.Parse(bets[i].SelectSingleNode(IdAttribute).InnerText),
-                    Name = bets[i].SelectSingleNode(NameAttribute).InnerText,
-                    IsLive = bets[i].SelectSingleNode(IsLiveAttribute).InnerText == "true",
-                    MatchHistoryId = Int32.Parse(bets[i].SelectSingleNode("@" + MatchIdAttribute).InnerText),
-                    MatchType = Enum.Parse<MatchType>(bets[i].SelectSingleNode("@" + MatchTypeAttribute).InnerText),
-                    MatchStartDate = DateTime.Parse(bets[i].SelectSingleNode("@" + MatchStartDateAttribute).InnerText)
-                };
-
-                allBets.Add(bet);
-            }
-
-            return allBets.Select(b => new BetHistoryDTO(b));
-        }
-
-        private IEnumerable<OddHistoryDTO> MapOdds(XmlDocument document)
-        {
-            var allOdds = new List<OddHistory>();
-            var odds = document.SelectNodes(OddNodes);
-            for (int i = 0; i < odds.Count; i++)
-            {
-                var odd = new OddHistory()
-                {
-                    Id = Int32.Parse(odds[i].SelectSingleNode(IdAttribute).InnerText),
-                    Name = odds[i].SelectSingleNode(NameAttribute).InnerText,
-                    Value = Convert.ToDecimal(odds[i].SelectSingleNode(ValueAttribute).InnerText),
-                    SpecialValueBet = odds[i].SelectSingleNode(SpecialBetValueAttribute)?.InnerText,
-                    BetHistoryId = Int32.Parse(odds[i].SelectSingleNode("@" + BetIdAttribute).InnerText),
-                };
-
-                allOdds.Add(odd);
-            }
-
-            return allOdds.Select(o => new OddHistoryDTO(o));
-        }
-
-        private XmlDocument TransformXml()
-        {
-            var doc = LoadFile();
-
-            var sports = doc.SelectNodes(SportNodes);
-
-            for (int m = 0; m < sports.Count; m++)
-            {
-                var sportEntity = new SportHistory()
-                {
-                    Id = Int32.Parse(sports[m].SelectSingleNode(IdAttribute).InnerText)
-                };
-
-                var events = sports[m].ChildNodes;
-
-                for (int i = 0; i < events.Count; i++)
-                {
-                    var sportIdAttribute = doc.CreateAttribute(SportIdAttribute);
-                    sportIdAttribute.Value = sportEntity.Id.ToString();
-                    events[i].Attributes.Append(sportIdAttribute);
-
-                    var eventEntity = new EventHistory()
-                    {
-                        Id = Int32.Parse(events[i].SelectSingleNode(IdAttribute).InnerText),
-                    };
-
-                    var matches = events[i].ChildNodes;
-
-                    for (int j = 0; j < matches.Count; j++)
-                    {
-                        var eventIdAttribute = doc.CreateAttribute(EventIdAttribute);
-                        eventIdAttribute.Value = eventEntity.Id.ToString();
-                        matches[j].Attributes.Append(eventIdAttribute);
-
-                        var matchEntity = new MatchHistory()
-                        {
-                            Id = Int32.Parse(matches[j].SelectSingleNode(IdAttribute).InnerText),
-                            MatchType = Enum.Parse<MatchType>(matches[j].SelectSingleNode("@" + MatchTypeAttribute).InnerText),
-                            StartDate = DateTime.Parse(matches[j].SelectSingleNode(StartDateAttribute).InnerText)
-                        };
-
-                        var bets = matches[j].ChildNodes;
-
-                        for (int k = 0; k < bets.Count; k++)
-                        {
-                            var attributeMatchId = doc.CreateAttribute(MatchIdAttribute);
-                            attributeMatchId.Value = matchEntity.Id.ToString();
-                            bets[k].Attributes.Append(attributeMatchId);
-
-                            var attributeMatchType = doc.CreateAttribute(MatchTypeAttribute);
-                            attributeMatchType.Value = matchEntity.MatchType.ToString();
-                            bets[k].Attributes.Append(attributeMatchType);
-
-                            var attributeMatchStartDate = doc.CreateAttribute(MatchStartDateAttribute);
-                            attributeMatchStartDate.Value = matchEntity.StartDate.ToString();
-                            bets[k].Attributes.Append(attributeMatchStartDate);
-
-                            var betEntity = new BetHistory()
-                            {
-                                Id = Int32.Parse(bets[k].SelectSingleNode(IdAttribute).InnerText),
-                            };
-
-                            var odds = bets[k].ChildNodes;
-
-                            for (int l = 0; l < odds.Count; l++)
-                            {
-                                var attributeBetId = doc.CreateAttribute(BetIdAttribute);
-                                attributeBetId.Value = betEntity.Id.ToString();
-                                odds[l].Attributes.Append(attributeBetId);
-                            }
-                        }
-                    }
-                }
-            }
-
-            //doc.Save(@"C:\Users\Angel\Desktop\tt.xml");
-            return doc;
-        }
-
-        private XmlDocument LoadFile()
-        {
-            XmlDocument doc = new XmlDocument();
-            //doc.Load(@"C:\Users\Angel\Desktop\data.xml");
-            string url = "https://sports.ultraplay.net/sportsxml?clientKey=9C5E796D-4D54-42FD-A535-D7E77906541A&sportId=2357&days=7";
-
-            using (var client = new WebClient())
-            {
-                string result = client.DownloadString(url);
-                doc.LoadXml(result);
-            }
-
-            return doc;
         }
     }
 }

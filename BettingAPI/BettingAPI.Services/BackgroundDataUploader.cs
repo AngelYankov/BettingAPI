@@ -23,11 +23,7 @@ namespace BettingAPI.Services
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            timer = new Timer(t =>
-            {
-                this.bettingService.Save();
-            }
-            , null, TimeSpan.Zero, TimeSpan.FromSeconds(60));
+            timer = new Timer(t => this.bettingService.Save(), null, TimeSpan.Zero, TimeSpan.FromSeconds(60));
 
             return Task.CompletedTask;
         }

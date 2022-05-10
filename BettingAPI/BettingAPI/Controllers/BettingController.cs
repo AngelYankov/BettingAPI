@@ -1,6 +1,7 @@
 ﻿using BettingAPI.Services;
 using BettingAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Diagnostics;
 
 namespace BettingAPI.Controllers
@@ -18,7 +19,12 @@ namespace BettingAPI.Controllers
             this.matchService = matchService;
         }
 
+        /// <summary>
+        /// Test endpoint for saving data from XML document
+        /// </summary>
+        /// <returns>Time elapsed to retrieve and save data from XML document</returns>
         [HttpPost]
+        [Route("save")]
         public IActionResult UpdateData()
         {
             Stopwatch s = new Stopwatch();
@@ -28,6 +34,11 @@ namespace BettingAPI.Controllers
             return Ok(s.ElapsedMilliseconds / 1000);
         }
 
+        /// <summary>
+        /// Get all Mathes starting in the next 24 hours along with all their active Bets and Odds
+        /// </summary>
+        /// <returns>Returns all Mathes starting in the next 24 hours along with all their active Bets and Odds 
+        /// or just the Match info if no active Bets and Odds</returns>
         [HttpGet]
         [Route("matches")]
         public IActionResult GetActiveMatches()
@@ -36,12 +47,25 @@ namespace BettingAPI.Controllers
             return Ok(matches);
         }
 
+        /// <summary>
+        /// Get Match by Id from Xml
+        /// </summary>
+        /// <param name="matchXmlId">Id of the Match from the XML document</param>
+        /// <returns>Returns Match object with all active and past Bets and Odds 
+        /// or 404 NotFound response if no Match object with such Id exists</returns>
         [HttpGet]
-        [Route("matches/{id}")]
-        public IActionResult GetMatch(int id)
+        [Route("matches/{matchXmlId}")]
+        public IActionResult GetMatch(int matchXmlId)
         {
-            var match = this.matchService.GetMatch(id);
-            return Ok(match);
+            try
+            {
+                var match = this.matchService.GetMatch(matchXmlId);
+                return Ok(match);
+            }
+            catch (Exception)
+            {
+                return NotFound();
+            }
         }
     }
 }

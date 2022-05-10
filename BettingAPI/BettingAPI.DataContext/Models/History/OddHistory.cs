@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BettingAPI.DataContext.Models.History
 {
@@ -16,5 +17,8 @@ namespace BettingAPI.DataContext.Models.History
         public int BetHistoryId { get; set; }
 
         public BetHistory BetHistory { get; set; }
+
+        public DateTime DateCreated { get; set; }
+
     }
 }

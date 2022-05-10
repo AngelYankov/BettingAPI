@@ -24,5 +24,8 @@ namespace BettingAPI.DataContext.Models.History
         public int EventHistoryId { get; set; }
 
         public EventHistory EventHistory { get; set; }
+
+        public DateTime DateCreated { get; set; }
+
     }
 }

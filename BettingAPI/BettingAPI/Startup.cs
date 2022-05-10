@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
-namespace BettingAPI
+namespace BettingAPI.API
 {
     public class Startup
     {
@@ -36,8 +36,6 @@ namespace BettingAPI
 
             services.AddScoped<IMatchService, MatchService>();
             services.AddScoped<IBettingServiceNew, BettingServiceNew>();
-            //services.AddScoped<IBettingService, BettingService>();
-            //services.AddScoped<IBettingOddsService, BettingOddsService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31321.278
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BettingAPI", "BettingAPI\BettingAPI.csproj", "{46B2792D-0C68-44BA-9842-555E4864550A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BettingAPI.API", "BettingAPI\BettingAPI.API.csproj", "{46B2792D-0C68-44BA-9842-555E4864550A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BettingAPI.DataContext", "BettingAPI.DataContext\BettingAPI.DataContext.csproj", "{BF9B90AE-25D2-4605-A249-035B8C12DF0B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BettingAPI.DataContext", "BettingAPI.DataContext\BettingAPI.DataContext.csproj", "{BF9B90AE-25D2-4605-A249-035B8C12DF0B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BettingAPI.Services", "BettingAPI.Services\BettingAPI.Services.csproj", "{4CCCB05E-CE3C-4D18-94FA-57A82B63AC81}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BettingAPI.Services", "BettingAPI.Services\BettingAPI.Services.csproj", "{4CCCB05E-CE3C-4D18-94FA-57A82B63AC81}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

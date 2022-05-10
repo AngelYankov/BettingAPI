@@ -24,7 +24,7 @@ namespace BettingAPI.Services.Models
             this.Name = match.Name;
             this.StartDate = match.StartDate;
             this.MatchType = match.MatchType;
-            this.Bets = match.Bets.Select(b => new BetDTO(b)).ToList();
+            this.Bets = match.Bets.Select(b => new BetActiveDTO(b)).ToList();
             this.EventId = match.EventId;
             this.Event = match.Event;
         }
@@ -37,7 +37,7 @@ namespace BettingAPI.Services.Models
 
         public MatchType MatchType { get; set; }
 
-        public List<BetDTO> Bets { get; set; }
+        public List<BetActiveDTO> Bets { get; set; }
 
         public int EventId { get; set; }
 

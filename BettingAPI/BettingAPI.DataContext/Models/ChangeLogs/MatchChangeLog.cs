@@ -7,7 +7,7 @@ namespace BettingAPI.DataContext.Models
     {
         public int Id { get; set; }
 
-        public int? MatchXmlId { get; set; }
+        public int MatchXmlId { get; set; }
 
         public string Name { get; set; }
 
@@ -15,7 +15,7 @@ namespace BettingAPI.DataContext.Models
 
         public MatchType? MatchType { get; set; }
 
-        public int? EventId { get; set; }
+        public int EventId { get; set; }
 
         public string ActionType { get; set; }
 

@@ -1,22 +1,12 @@
 ﻿using BettingAPI.DataContext.Models.Active;
-using BettingAPI.DataContext.Models.History;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace BettingAPI.Services.Models
 {
-    public class BetDTO
+    public class BetActiveDTO
     {
-        public BetDTO(BetHistory betHistory)
-        {
-            this.Id = betHistory.Id;
-            this.IsLive = betHistory.IsLive;
-            this.MatchId = betHistory.MatchHistoryId;
-            this.Name = betHistory.Name;
-            this.Odds = betHistory.OddHistories.Select(o => new OddDTO(o)).ToList();
-        }
-
-        public BetDTO(Bet bet)
+        public BetActiveDTO(Bet bet)
         {
             this.Id = bet.Id;
             this.IsLive = bet.IsLive;
