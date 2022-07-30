@@ -36,6 +36,7 @@ namespace BettingAPI.API
 
             services.AddScoped<IMatchService, MatchService>();
             services.AddScoped<IBettingService, BettingService>();
+            services.AddScoped<IDeserializeService, DeserializeService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

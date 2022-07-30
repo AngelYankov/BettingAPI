@@ -19,5 +19,7 @@ namespace BettingAPI.DataContext.Models.Active
         public int BetId { get; set; }
 
         public Bet Bet { get; set; }
+
+        public bool IsActive { get; set; }
     }
 }

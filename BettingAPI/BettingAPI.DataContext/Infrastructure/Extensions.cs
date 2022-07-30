@@ -25,7 +25,7 @@ namespace BettingAPI.DataContext.Infrastructure
             }
 
             //Populate the data table
-            foreach (T item in collection)
+            foreach (var item in collection)
             {
                 DataRow dataRow = dataTable.NewRow();
                 dataRow.BeginEdit();

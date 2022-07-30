@@ -11,6 +11,7 @@ namespace BettingAPI.Services.Models
             this.Value = odd.Value;
             this.BetId = odd.BetId;
             this.SpecialValueBet = odd.SpecialValueBet;
+            this.IsActive = odd.IsActive;
         }
 
         public int Id { get; set; }
@@ -22,5 +23,7 @@ namespace BettingAPI.Services.Models
         public int BetId { get; set; }
 
         public string SpecialValueBet { get; set; }
+
+        public bool IsActive { get; set; }
     }
 }

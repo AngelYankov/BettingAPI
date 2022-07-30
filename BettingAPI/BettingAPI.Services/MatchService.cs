@@ -1,5 +1,4 @@
 ﻿using BettingAPI.DataContext;
-using BettingAPI.DataContext.Infrastructure;
 using BettingAPI.Services.Interfaces;
 using BettingAPI.Services.Models;
 using Microsoft.EntityFrameworkCore;
@@ -21,34 +20,42 @@ namespace BettingAPI.Services
         /// Gets all Match objects starting in the next 24 hours along with all their active Bets and Odds
         /// </summary>
         /// <returns>List with all Match objects starting in the next 24 hours along with all their active Bets and Odds</returns>
-        public List<AllMatchesDTO> GetAllMatches()
+        public List<MatchWithBetsDTO> GetAllMatches()
         {
-            var allFutureMatches = this.context.MatchHistories
+            var allFutureMatches = this.context.Matches
                 .Where(m => m.StartDate > DateTime.Now && m.StartDate <= DateTime.Now.AddHours(24) && (int)m.MatchType != 2)
-                .DistinctBy(m => m.Id)
+                .Include(m=>m.Bets)
+                    .ThenInclude(b=>b.Odds)
                 .ToList();
+            var allMatchIds = allFutureMatches.Select(m => m.Id);
 
-            var allActiveMatches = new List<AllMatchesDTO>();
-
-            var allActiveBetsMatches = this.context.Matches
-                .Include(m => m.Bets)
-                    .ThenInclude(b => b.Odds)
+            var allMatchBets = this.context.Bets.Where(
+                b => allMatchIds.Contains(b.MatchId) && 
+                b.IsActive == true && 
+                (
+                    b.Name == "Match Winner" || 
+                    b.Name == "Map Advantage" || 
+                    b.Name == "Total Maps Played")
+                )
                 .ToList();
+            var allMatchBetIds = allMatchBets.Select(b => b.Id);
 
-            foreach (var match in allFutureMatches)
+            var allBetOdds = this.context.Odds.Where(o => allMatchBetIds.Contains(o.BetId) && o.IsActive);
+            var allBetOddsIds = allBetOdds.Select(o => o.Id);
+
+            var all = allFutureMatches.Where(m => allMatchIds.Contains(m.Id));
+
+            foreach (var match in all)
             {
-                var activeMatchBet = allActiveBetsMatches.FirstOrDefault(m => m.Id == match.Id);
-                if (activeMatchBet != null)
+                match.Bets = match.Bets.Where(b => allMatchBetIds.Contains(b.Id)).ToList();
+
+                foreach (var bet in match.Bets)
                 {
-                    allActiveMatches.Add(new AllMatchesDTO(activeMatchBet));
-                }
-                else
-                {
-                    allActiveMatches.Add(new AllMatchesDTO(match));
+                    bet.Odds = bet.Odds.Where(o => allBetOddsIds.Contains(o.Id)).ToList().GroupBy(b => b.SpecialValueBet).Select(grp => grp.ToList()).First();
                 }
             }
 
-            return allActiveMatches;
+            return all.Select(m => new MatchWithBetsDTO(m)).ToList();
         }
 
         /// <summary>
@@ -56,37 +63,17 @@ namespace BettingAPI.Services
         /// </summary>
         /// <param name="matchXmlId">Id of the Match object according to the XML document</param>
         /// <returns>Match object with all of its active and past Bets and Odds</returns>
-        public MatchDTO GetMatch(int matchXmlId)
+        public MatchWithBetsDTO GetMatch(int matchXmlId)
         {
-            var match = this.context.MatchHistories
-                .Include(m => m.BetHistories)
-                    .ThenInclude(b => b.OddHistories)
+            var match = this.context.Matches
+                .Include(m => m.Bets)
+                    .ThenInclude(b => b.Odds)
                 .FirstOrDefault(m => m.Id == matchXmlId)
-                ?? throw new ArgumentException(); ;
+                ?? throw new ArgumentException();
 
-            var activeBets = this.context.Bets
-                .Include(b => b.Odds)
-                .Where(b => b.MatchId == matchXmlId)
-                .ToList();
+            var matchDTO = new MatchWithBetsDTO(match);
 
-            var activeBetsDTO = activeBets
-                .Select(b => new BetActiveDTO(b))
-                .ToList();
-
-            var activeBetsIds = activeBets.Select(b => b.Id);
-
-            var allBets = this.context.BetHistories
-                .Include(b => b.OddHistories)
-                .Where(b => b.MatchHistoryId == matchXmlId)
-                .ToList();
-
-            allBets.RemoveAll(b => activeBetsIds.Contains(b.Id));
-
-            var matchDto = new MatchDTO(match);
-            matchDto.ActiveBets = activeBetsDTO;
-            matchDto.PastBets = allBets.Select(b => new BetPastDTO(b)).ToList();
-
-            return matchDto;
+            return matchDTO;
         }
     }
 }

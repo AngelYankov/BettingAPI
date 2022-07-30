@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using BettingAPI.DataContext.Enums;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -20,5 +22,11 @@ namespace BettingAPI.DataContext.Models.Active
         public Match Match { get; set; }
 
         public List<Odd> Odds { get; set; }
+
+        public MatchType MatchType { get; set; }
+
+        public DateTime MatchStartDate { get; set; }
+
+        public bool IsActive { get; set; }
     }
 }

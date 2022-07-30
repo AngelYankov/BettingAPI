@@ -13,5 +13,7 @@ namespace BettingAPI.DataContext.Models.Active
         public string Name { get; set; }
 
         public List<Event> Events { get; set; }
+
+        public bool IsActive { get; set; }
     }
 }

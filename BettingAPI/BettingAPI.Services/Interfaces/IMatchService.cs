@@ -5,9 +5,9 @@ namespace BettingAPI.Services.Interfaces
 {
     public interface IMatchService
     {
-        List<AllMatchesDTO> GetAllMatches();
+        List<MatchWithBetsDTO> GetAllMatches();
 
-        MatchDTO GetMatch(int id);
+        MatchWithBetsDTO GetMatch(int id);
 
     }
 }

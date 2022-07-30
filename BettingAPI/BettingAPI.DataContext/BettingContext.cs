@@ -2,7 +2,6 @@
 using BettingAPI.DataContext.Models;
 using BettingAPI.DataContext.Models.Active;
 using BettingAPI.DataContext.Models.ChangeLogs;
-using BettingAPI.DataContext.Models.History;
 using Microsoft.EntityFrameworkCore;
 
 namespace BettingAPI.DataContext
@@ -11,16 +10,6 @@ namespace BettingAPI.DataContext
     {
         public BettingContext(DbContextOptions<BettingContext> options)
             : base(options) { }
-
-        public DbSet<SportHistory> SportHistories { get; set; }
-
-        public DbSet<EventHistory> EventHistories { get; set; }
-
-        public DbSet<MatchHistory> MatchHistories { get; set; }
-
-        public DbSet<BetHistory> BetHistories { get; set; }
-
-        public DbSet<OddHistory> OddHistories { get; set; }
 
         public DbSet<Sport> Sports { get; set; }
         
@@ -42,10 +31,6 @@ namespace BettingAPI.DataContext
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.ApplyConfiguration(new EventHistoryConfig());
-            modelBuilder.ApplyConfiguration(new MatchHistoryConfig());
-            modelBuilder.ApplyConfiguration(new BetHistoryConfig());
-            modelBuilder.ApplyConfiguration(new OddHistoryConfig());
             modelBuilder.ApplyConfiguration(new OddConfig());
         }
     }

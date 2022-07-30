@@ -14,7 +14,7 @@ namespace BettingAPI.DataContext.Models.ChangeLogs
 
         public int MatchId { get; set; }
 
-        public string ActionType { get; set; }
+        public string ActionToTake { get; set; }
 
         public DateTime DateCreated { get; set; }
     }
