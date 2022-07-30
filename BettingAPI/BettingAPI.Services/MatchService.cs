@@ -1,4 +1,5 @@
 ﻿using BettingAPI.DataContext;
+using BettingAPI.DataContext.Infrastructure;
 using BettingAPI.Services.Interfaces;
 using BettingAPI.Services.Models;
 using Microsoft.EntityFrameworkCore;
@@ -24,38 +25,41 @@ namespace BettingAPI.Services
         {
             var allFutureMatches = this.context.Matches
                 .Where(m => m.StartDate > DateTime.Now && m.StartDate <= DateTime.Now.AddHours(24) && (int)m.MatchType != 2)
-                .Include(m=>m.Bets)
-                    .ThenInclude(b=>b.Odds)
-                .ToList();
+                .Include(m => m.Bets)
+                    .ThenInclude(b => b.Odds);
+
             var allMatchIds = allFutureMatches.Select(m => m.Id);
 
-            var allMatchBets = this.context.Bets.Where(
-                b => allMatchIds.Contains(b.MatchId) && 
-                b.IsActive == true && 
+            var allBets = this.context.Bets.Where(
+                b => allMatchIds.Contains(b.MatchId) &&
+                b.IsActive == true &&
                 (
-                    b.Name == "Match Winner" || 
-                    b.Name == "Map Advantage" || 
-                    b.Name == "Total Maps Played")
-                )
-                .ToList();
-            var allMatchBetIds = allMatchBets.Select(b => b.Id);
+                    b.Name == Constants.MatchWinner ||
+                    b.Name == Constants.MapAdvantage ||
+                    b.Name == Constants.TotalMapsPlayed)
+                );
 
-            var allBetOdds = this.context.Odds.Where(o => allMatchBetIds.Contains(o.BetId) && o.IsActive);
-            var allBetOddsIds = allBetOdds.Select(o => o.Id);
+            var allBetIds = allBets.Select(b => b.Id);
 
-            var all = allFutureMatches.Where(m => allMatchIds.Contains(m.Id));
+            var allOdds = this.context.Odds.Where(o => allBetIds.Contains(o.BetId) && o.IsActive);
 
-            foreach (var match in all)
+            var allOddIds = allOdds.Select(o => o.Id);
+
+            foreach (var match in allFutureMatches)
             {
-                match.Bets = match.Bets.Where(b => allMatchBetIds.Contains(b.Id)).ToList();
+                match.Bets = match.Bets.Where(b => allBetIds.Contains(b.Id)).ToList();
 
                 foreach (var bet in match.Bets)
                 {
-                    bet.Odds = bet.Odds.Where(o => allBetOddsIds.Contains(o.Id)).ToList().GroupBy(b => b.SpecialValueBet).Select(grp => grp.ToList()).First();
+                    bet.Odds = bet.Odds
+                        .Where(o => allOddIds.Contains(o.Id))
+                        .GroupBy(b => b.SpecialValueBet)
+                        .Select(grp => grp.ToList())
+                        .First();
                 }
             }
 
-            return all.Select(m => new MatchWithBetsDTO(m)).ToList();
+            return allFutureMatches.Select(m => new MatchWithBetsDTO(m)).ToList();
         }
 
         /// <summary>

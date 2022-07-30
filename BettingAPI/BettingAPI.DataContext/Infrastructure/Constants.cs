@@ -21,5 +21,9 @@
         public const string MatchTypeAttribute = "MatchType";
         public const string MatchStartDateAttribute = "MatchStartDate";
         public const string AtChar = "@";
+        
+        public const string MatchWinner = "Match Winner";
+        public const string MapAdvantage = "Map Advantage";
+        public const string TotalMapsPlayed = "Total Maps Played";
     }
 }
